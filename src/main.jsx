@@ -6,6 +6,7 @@ import './styles.css';
 
 const INSTAGRAM='https://www.instagram.com/kaliiii_na?igsi=MXUwbGo3b3owb3p5aQ==';
 const TELEGRAM='https://t.me/kaliiiin_a';
+const ASSET_ORIGIN='https://kaliina.pages.dev';
 const categories=[['theme','тематика'],['name','название'],['mood','ощущение'],['fonts','пример шрифтов'],['palette','цвета']];
 const sources={theme:randomizerData.themes,name:randomizerData.names,mood:randomizerData.moods,fonts:randomizerData.fontPairs,palette:randomizerData.palettes};
 const random=list=>list[Math.floor(Math.random()*list.length)];
@@ -17,7 +18,7 @@ const benefitsLeft=['помогает выйти из творческого с�
 const benefitsRight=['развивает умение аргументировать решения.','подходит для совместных дизайн-челленджей.','помогает создавать проекты для портфолио.'];
 
 function Benefits({side}){const list=side==='left'?benefitsLeft:benefitsRight;return <div className={`benefits benefits--${side} intro-reveal intro-reveal--copy`}>{side==='left'&&<div className="benefits__lead"><b>[некоммерческий проект]</b><b>помощь дизайнерам:</b></div>}{list.map((text,i)=><p key={i}><strong>real:</strong><span>\</span>{text}</p>)}</div>}
-function Macintosh(){return <div className="mac intro-reveal intro-reveal--mac"><img src="/assets/macintosh-cutout.png" alt="Старый компьютер Macintosh с надписью hello на экране"/><div className="crt"><i/></div></div>}
+function Macintosh(){return <div className="mac intro-reveal intro-reveal--mac"><img src={`${ASSET_ORIGIN}/assets/macintosh-cutout.png`} alt="Старый компьютер Macintosh с надписью hello на экране"/><div className="crt"><i/></div></div>}
 function DisplayValue({type,value}){
  if(!value)return null;
  if(type==='fonts')return <div className="font-pair"><strong style={{fontFamily:`'${value.display}', sans-serif`}}>{value.display}</strong><span style={{fontFamily:`'${value.body}', sans-serif`}}>{value.body}</span>{!value.cyrillic&&<small>latin display / cyrillic body</small>}</div>;
@@ -52,7 +53,7 @@ function App(){
   <ModelingRandomizer/>
   <footer className="footer intro-reveal intro-reveal--footer">
    <div className="footer__copy"><p>Если вы заметили ошибки в работе рандомайзера, столкнулись с некорректной генерацией или хотите поделиться замечаниями и предложениями по улучшению проекта — буду рада обратной связи.<br/>Также вы можете связаться со мной по вопросам сотрудничества, совместных проектов и других предложений.</p><b>контакты:</b><nav aria-label="Контакты"><a href="mailto:klina2708@gmail.com">real: klina2708@gmail.com</a><a href={INSTAGRAM} target="_blank" rel="noopener noreferrer">real: inst: kaliiii_na</a><a href={TELEGRAM} target="_blank" rel="noopener noreferrer">tg: kaliiiin_a</a></nav><p className="thanks">Спасибо, что заглянули на этот сайт и уделили время проекту. Мне очень приятно, что рандомайзер может быть вам интересен или полезен. Если вы хотите поддержать автора, просто поделитесь сайтом с друзьями, коллегами или сделайте репост в социальных сетях. Для независимого некоммерческого проекта такая поддержка действительно много значит.</p></div>
-   <a className="profile" href={INSTAGRAM} target="_blank" rel="noopener noreferrer" aria-label="Открыть профиль @kaliiii_na в Instagram"><img src="/assets/telegram-qr.png" alt="QR-код Telegram"/></a>
+   <a className="profile" href={INSTAGRAM} target="_blank" rel="noopener noreferrer" aria-label="Открыть профиль @kaliiii_na в Instagram"><img src={`${ASSET_ORIGIN}/assets/telegram-qr.png`} alt="QR-код Telegram"/></a>
   </footer>
  </main>}
 createRoot(document.getElementById('root')).render(<App/>);
