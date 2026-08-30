@@ -10,7 +10,7 @@ const categories=[['theme','тематика'],['name','название'],['moo
 const sources={theme:randomizerData.themes,name:randomizerData.names,mood:randomizerData.moods,fonts:randomizerData.fontPairs,palette:randomizerData.palettes};
 const random=list=>list[Math.floor(Math.random()*list.length)];
 const intersects=(a=[],b=[])=>a.filter(x=>b.includes(x)).length;
-const UNIQUE_RESULT_LIMIT=40000;
+const UNIQUE_RESULT_LIMIT=100000;
 const brandingResultKey=result=>[result.theme.name,result.name.name,result.mood.name,result.fonts.display,result.fonts.body,result.palette.colors.join(',')].join('|');
 const modelingResultKey=result=>[result.object.name,result.theme.name,result.material.name,result.palette.colors.join(',')].join('|');
 function createUniqueResult(factory,keyOf){
