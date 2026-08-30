@@ -55,7 +55,7 @@ function App(){
  const generate=()=>{if(status==='generating')return;timers.current.forEach(id=>clearTimeout(id));const final=uniqueResult.current();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced){setValues(final);setStatus('generated');return}setStatus('generating');setRolling(categories.map(([type])=>type));categories.forEach(([type],index)=>{const spin=setInterval(()=>setValues(old=>({...old,[type]:random(sources[type])})),52+index*4);timers.current.push(spin);const stop=setTimeout(()=>{clearInterval(spin);setValues(old=>({...old,[type]:final[type]}));setRolling(old=>old.filter(x=>x!==type));if(index===categories.length-1)setStatus('generated')},790+index*115);timers.current.push(stop)})};
  return <main>
   <section className="intro">
-    <div className="intro__left"><h1 className="intro-reveal intro-reveal--title">Генератор ТЗ</h1><Benefits side="left"/></div>
+    <div className="intro__left"><h1 className="intro-reveal intro-reveal--title">Generator T3</h1><Benefits side="left"/></div>
     <div className="intro__center"><Macintosh/></div>
     <div className="intro__right"><a className="author intro-reveal intro-reveal--author" href={INSTAGRAM} target="_blank" rel="noopener noreferrer">@kaliiii_na</a><Benefits side="right"/></div>
   </section>
