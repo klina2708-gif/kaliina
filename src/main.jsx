@@ -68,7 +68,10 @@ function App(){
   <ModelingRandomizer/>
   <footer className="footer intro-reveal intro-reveal--footer">
    <div className="footer__copy"><p>Если вы заметили ошибки в работе рандомайзера, столкнулись с некорректной генерацией или хотите поделиться замечаниями и предложениями по улучшению проекта — буду рада обратной связи.<br/>Также вы можете связаться со мной по вопросам сотрудничества, совместных проектов и других предложений.</p><b>контакты:</b><nav aria-label="Контакты"><a href="mailto:klina2708@gmail.com">real: klina2708@gmail.com</a><a href={INSTAGRAM} target="_blank" rel="noopener noreferrer">real: inst: kaliiii_na</a><a href={TELEGRAM} target="_blank" rel="noopener noreferrer">tg: kaliiiin_a</a></nav><p className="thanks">Спасибо, что заглянули на этот сайт и уделили время проекту. Мне очень приятно, что рандомайзер может быть вам интересен или полезен. Если вы хотите поддержать автора, просто поделитесь сайтом с друзьями, коллегами или сделайте репост в социальных сетях. Для независимого некоммерческого проекта такая поддержка действительно много значит.</p></div>
-   <a className="profile" href={INSTAGRAM} target="_blank" rel="noopener noreferrer" aria-label="Открыть профиль @kaliiii_na в Instagram"><img src="/assets/telegram-qr.png" alt="QR-код Telegram"/></a>
+   <aside className="statistics" aria-label="Статистика проекта">
+    <div className="statistics__item"><div className="statistics__value-row"><span className="statistics__value">100 000</span><span className="statistics__unit">тыс.</span></div><div className="statistics__label">комбинаций</div></div>
+    <div className="statistics__item"><div className="statistics__value-row"><span className="statistics__value">65–75</span><span className="statistics__unit">тыс.</span></div><div className="statistics__label">загрузок в месяц</div></div>
+   </aside>
   </footer>
  </main>}
 createRoot(document.getElementById('root')).render(<App/>);
