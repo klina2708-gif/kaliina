@@ -24,7 +24,7 @@ export async function onRequestOptions({request}){
  return new Response(null,{status:204,headers:corsHeaders(origin)});
 }
 
-export async function onRequestPost({request}){
+export async function onRequestPost({request,env}){
  const origin=allowedOrigin(request);
  if(!origin)return new Response(null,{status:403});
  const length=Number(request.headers.get('Content-Length')||0);
@@ -42,6 +42,14 @@ export async function onRequestPost({request}){
   userAgent:clean(input.userAgent,300),
   timestamp:clean(input.timestamp,40),
  };
+ if(!env?.ERRORS_DB)return new Response(null,{status:503,headers:corsHeaders(origin)});
+ try{
+  await env.ERRORS_DB.prepare(`INSERT INTO client_errors
+   (kind,message,stack,source,page,user_agent,reported_at)
+   VALUES (?,?,?,?,?,?,?)`).bind(
+    event.kind,event.message,event.stack,event.source,event.page,event.userAgent,event.timestamp,
+   ).run();
+ }catch(error){console.error('client_error_storage_failed',error);return new Response(null,{status:500,headers:corsHeaders(origin)})}
  console.error(JSON.stringify(event));
  return new Response(null,{status:204,headers:corsHeaders(origin)});
 }
