@@ -1,0 +1,9 @@
+name = "kaliina"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-08-28"
+
+[[d1_databases]]
+binding = "ERRORS_DB"
+database_name = "kaliina-monitoring"
+database_id = "7974c001-52c7-43f0-9b91-840c97423708"
+
