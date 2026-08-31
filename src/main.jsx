@@ -1,8 +1,10 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {randomizerData} from './data/randomizerData.js';
+import {brandingResultKey,createBrandingResult,loadBrandingHistory,rememberBrandingResult} from './brandingGenerator.js';
 import {generateModelingResult,modelingRandomizerData} from './data/modelingRandomizerData.js';
 import {reportClientError,startClientMonitoring} from './monitoring.js';
+import './fonts.css';
 import './styles.css';
 
 const INSTAGRAM='https://www.instagram.com/kaliiii_na?igsi=MXUwbGo3b3owb3p5aQ==';
@@ -10,24 +12,20 @@ const TELEGRAM='https://t.me/kaliiiin_a';
 const categories=[['theme','тематика'],['name','название'],['mood','ощущение'],['fonts','пример шрифтов'],['palette','цвета']];
 const sources={theme:randomizerData.themes,name:randomizerData.names,mood:randomizerData.moods,fonts:randomizerData.fontPairs,palette:randomizerData.palettes};
 const random=list=>list[Math.floor(Math.random()*list.length)];
-const intersects=(a=[],b=[])=>a.filter(x=>b.includes(x)).length;
 const UNIQUE_RESULT_LIMIT=100000;
-const brandingResultKey=result=>[result.theme.name,result.name.name,result.mood.name,result.fonts.display,result.fonts.body,result.palette.colors.join(',')].join('|');
 const modelingResultKey=result=>[result.object.name,result.theme.name,result.material.name,result.palette.colors.join(',')].join('|');
-function createUniqueResult(factory,keyOf){
+function createUniqueResult(factory,keyOf,onAccept=()=>{}){
  const seen=new Set();
  return ()=>{
   if(seen.size>=UNIQUE_RESULT_LIMIT)seen.clear();
   for(let attempt=0;attempt<120;attempt+=1){
    const result=factory(),key=keyOf(result);
-   if(!seen.has(key)){seen.add(key);return result}
+   if(!seen.has(key)){seen.add(key);onAccept(result);return result}
   }
   seen.clear();
-  const result=factory();seen.add(keyOf(result));return result;
+  const result=factory();seen.add(keyOf(result));onAccept(result);return result;
  };
 }
-function weighted(list,tags){if(Math.random()<.24)return random(list);const weightedList=list.map(item=>({item,weight:1+intersects(item.tags,tags)*5}));let cursor=Math.random()*weightedList.reduce((sum,x)=>sum+x.weight,0);for(const entry of weightedList){cursor-=entry.weight;if(cursor<=0)return entry.item}return weightedList.at(-1).item}
-function makeResult(){const theme=random(randomizerData.themes),tags=theme.tags;return {theme,name:weighted(randomizerData.names,tags),mood:weighted(randomizerData.moods,tags),fonts:weighted(randomizerData.fontPairs,tags),palette:weighted(randomizerData.palettes,tags)}}
 
 const benefitsLeft=['помогает выйти из творческого ступора.','создаёт полноценные тренировочные брифы.','развивает концептуальное мышление','провоцирует неожиданные сочетания.','экономит время'];
 const benefitsRight=['развивает умение аргументировать решения.','подходит для совместных дизайн-челленджей.','помогает создавать проекты для портфолио.'];
@@ -36,7 +34,7 @@ function Benefits({side}){const list=side==='left'?benefitsLeft:benefitsRight;re
 function Macintosh(){return <div className="mac intro-reveal intro-reveal--mac"><img src="/assets/macintosh-cutout.png" alt="Старый компьютер Macintosh с надписью hello на экране"/><div className="crt"><i/></div></div>}
 function DisplayValue({type,value}){
  if(!value)return null;
- if(type==='fonts')return <div className="font-pair"><strong style={{fontFamily:`'${value.display}', sans-serif`}}>{value.display}</strong><span style={{fontFamily:`'${value.body}', sans-serif`}}>{value.body}</span>{!value.cyrillic&&<small>latin display / cyrillic body</small>}</div>;
+ if(type==='fonts')return <div className="font-pair"><strong style={{fontFamily:`'${value.display}', sans-serif`,fontWeight:value.displayWeight,fontStyle:value.displayStyle||'normal'}}>{value.display}</strong><span style={{fontFamily:`'${value.body}', sans-serif`,fontWeight:value.bodyWeight,fontStyle:value.bodyStyle||'normal'}}>{value.body}</span></div>;
  if(type==='palette')return <div className="palette" aria-label={`Палитра: ${value.colors.join(', ')}`}>{value.colors.map(color=><i key={color} style={{backgroundColor:color}} title={color}/>)}</div>;
  return <>{value.name}</>;
 }
@@ -51,7 +49,8 @@ function ModelingRandomizer(){const [values,setValues]=useState({});const [statu
 
 function App(){
  const [values,setValues]=useState({});const [status,setStatus]=useState('initial');const [rolling,setRolling]=useState([]);const timers=useRef([]);
- const uniqueResult=useRef(null);if(!uniqueResult.current)uniqueResult.current=createUniqueResult(makeResult,brandingResultKey);
+ const history=useRef(null);if(history.current===null)history.current=loadBrandingHistory();
+ const uniqueResult=useRef(null);if(!uniqueResult.current)uniqueResult.current=createUniqueResult(()=>createBrandingResult(history.current),brandingResultKey,result=>{history.current=rememberBrandingResult(result,history.current)});
  useEffect(()=>()=>timers.current.forEach(id=>clearTimeout(id)),[]);
  const generate=()=>{if(status==='generating')return;timers.current.forEach(id=>clearTimeout(id));const final=uniqueResult.current();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced){setValues(final);setStatus('generated');return}setStatus('generating');setRolling(categories.map(([type])=>type));categories.forEach(([type],index)=>{const spin=setInterval(()=>setValues(old=>({...old,[type]:random(sources[type])})),52+index*4);timers.current.push(spin);const stop=setTimeout(()=>{clearInterval(spin);setValues(old=>({...old,[type]:final[type]}));setRolling(old=>old.filter(x=>x!==type));if(index===categories.length-1)setStatus('generated')},790+index*115);timers.current.push(stop)})};
  return <main>
