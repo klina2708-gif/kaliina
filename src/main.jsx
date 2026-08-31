@@ -12,6 +12,11 @@ const TELEGRAM='https://t.me/kaliiiin_a';
 const categories=[['theme','тематика'],['name','название'],['mood','ощущение'],['fonts','пример шрифтов'],['palette','цвета']];
 const sources={theme:randomizerData.themes,name:randomizerData.names,mood:randomizerData.moods,fonts:randomizerData.fontPairs,palette:randomizerData.palettes};
 const random=list=>list[Math.floor(Math.random()*list.length)];
+const fontLoadSpecs=[...new Set(randomizerData.fontPairs.flatMap(pair=>[
+ `${pair.displayStyle||'normal'} ${pair.displayWeight||400} 1em "${pair.display}"`,
+ `${pair.bodyStyle||'normal'} ${pair.bodyWeight||400} 1em "${pair.body}"`,
+]))];
+const preloadGeneratorFonts=()=>document.fonts?.load?Promise.allSettled(fontLoadSpecs.map(spec=>document.fonts.load(spec,'Аа Brand'))):Promise.resolve();
 const UNIQUE_RESULT_LIMIT=100000;
 const modelingResultKey=result=>[result.object.name,result.theme.name,result.material.name,result.palette.colors.join(',')].join('|');
 function createUniqueResult(factory,keyOf,onAccept=()=>{}){
@@ -48,11 +53,11 @@ function ModelingCell({index,type,label,value,generating}){const compact=value?.
 function ModelingRandomizer(){const [values,setValues]=useState({});const [status,setStatus]=useState('initial');const [rolling,setRolling]=useState([]);const timers=useRef([]);const uniqueResult=useRef(null);if(!uniqueResult.current)uniqueResult.current=createUniqueResult(generateModelingResult,modelingResultKey);useEffect(()=>()=>timers.current.forEach(id=>clearTimeout(id)),[]);const generate=()=>{if(status==='generating')return;timers.current.forEach(id=>clearTimeout(id));const final=uniqueResult.current();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced){setValues(final);setStatus('generated');return}setStatus('generating');setRolling(modelingCategories.map(([type])=>type));modelingCategories.forEach(([type],index)=>{const spin=setInterval(()=>setValues(old=>({...old,[type]:random(modelingSources[type])})),52+index*4);timers.current.push(spin);const stop=setTimeout(()=>{clearInterval(spin);setValues(old=>({...old,[type]:final[type]}));setRolling(old=>old.filter(x=>x!==type));if(index===modelingCategories.length-1)setStatus('generated')},790+index*115);timers.current.push(stop)})};return <section className="modeling-randomizer" aria-label="Генератор задания для 3Д-моделирования" aria-busy={status==='generating'}><h2 className="modeling-title">3Д моделирование</h2><div className="modeling-cells">{modelingCategories.map(([type,label],index)=><ModelingCell key={type} index={index} type={type} label={label} value={values[type]} generating={rolling.includes(type)}/>)}</div><button className="generate" onClick={generate} disabled={status==='generating'}>{status==='generated'?'ещё раз':'попробуй'}</button><span className="sr-only" aria-live="polite">{status==='generated'?'Новое задание для 3Д-моделирования сгенерировано':''}</span></section>}
 
 function App(){
- const [values,setValues]=useState({});const [status,setStatus]=useState('initial');const [rolling,setRolling]=useState([]);const timers=useRef([]);
+ const [values,setValues]=useState({});const [status,setStatus]=useState('initial');const [rolling,setRolling]=useState([]);const [fontsReady,setFontsReady]=useState(false);const timers=useRef([]);
  const history=useRef(null);if(history.current===null)history.current=loadBrandingHistory();
  const uniqueResult=useRef(null);if(!uniqueResult.current)uniqueResult.current=createUniqueResult(()=>createBrandingResult(history.current),brandingResultKey,result=>{history.current=rememberBrandingResult(result,history.current)});
- useEffect(()=>()=>timers.current.forEach(id=>clearTimeout(id)),[]);
- const generate=()=>{if(status==='generating')return;timers.current.forEach(id=>clearTimeout(id));const final=uniqueResult.current();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced){setValues(final);setStatus('generated');return}setStatus('generating');setRolling(categories.map(([type])=>type));categories.forEach(([type],index)=>{const spin=setInterval(()=>setValues(old=>({...old,[type]:random(sources[type])})),52+index*4);timers.current.push(spin);const stop=setTimeout(()=>{clearInterval(spin);setValues(old=>({...old,[type]:final[type]}));setRolling(old=>old.filter(x=>x!==type));if(index===categories.length-1)setStatus('generated')},790+index*115);timers.current.push(stop)})};
+ useEffect(()=>{let active=true;preloadGeneratorFonts().finally(()=>{if(active)setFontsReady(true)});return()=>{active=false;timers.current.forEach(id=>clearTimeout(id))}},[]);
+ const generate=()=>{if(status==='generating'||!fontsReady)return;timers.current.forEach(id=>clearTimeout(id));const final=uniqueResult.current();const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced){setValues(final);setStatus('generated');return}setStatus('generating');setRolling(categories.map(([type])=>type));categories.forEach(([type],index)=>{let spin;if(type==='fonts'){setValues(old=>({...old,fonts:final.fonts}))}else{spin=setInterval(()=>setValues(old=>({...old,[type]:random(sources[type])})),52+index*4);timers.current.push(spin)}const stop=setTimeout(()=>{if(spin)clearInterval(spin);setValues(old=>({...old,[type]:final[type]}));setRolling(old=>old.filter(x=>x!==type));if(index===categories.length-1)setStatus('generated')},790+index*115);timers.current.push(stop)})};
  return <main>
   <section className="intro">
     <div className="intro__left"><h1 className="intro-reveal intro-reveal--title">Generator T3</h1><Benefits side="left"/></div>
@@ -62,7 +67,7 @@ function App(){
   <section className="randomizer intro-reveal intro-reveal--randomizer" aria-label="Генератор технического задания" aria-busy={status==='generating'}>
    <h2 className="modeling-title">Фирменный стиль</h2>
    <div className="cells">{categories.map(([type,label],index)=><RandomizerCell key={type} index={index} type={type} label={label} value={values[type]} generating={rolling.includes(type)}/>)}</div>
-   <button className="generate" onClick={generate} disabled={status==='generating'}>{status==='generated'?'ещё раз':'попробуй'}</button>
+   <button className="generate" onClick={generate} disabled={status==='generating'||!fontsReady}>{status==='generated'?'ещё раз':'попробуй'}</button>
    <span className="sr-only" aria-live="polite">{status==='generated'?'Новое задание сгенерировано':''}</span>
   </section>
   <ModelingRandomizer/>
