@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {randomizerData} from './data/randomizerData.js';
 import {generateModelingResult,modelingRandomizerData} from './data/modelingRandomizerData.js';
+import {reportClientError,startClientMonitoring} from './monitoring.js';
 import './styles.css';
 
 const INSTAGRAM='https://www.instagram.com/kaliiii_na?igsi=MXUwbGo3b3owb3p5aQ==';
@@ -74,5 +75,10 @@ function App(){
    </aside>
   </footer>
  </main>}
-createRoot(document.getElementById('root')).render(<App/>);
+startClientMonitoring();
+createRoot(document.getElementById('root'),{
+ onUncaughtError:error=>reportClientError(error,{kind:'react.uncaught'}),
+ onCaughtError:error=>reportClientError(error,{kind:'react.caught'}),
+ onRecoverableError:error=>reportClientError(error,{kind:'react.recoverable'}),
+}).render(<App/>);
 
