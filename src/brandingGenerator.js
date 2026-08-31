@@ -19,9 +19,10 @@ const itemValue=(item,field)=>field==='fontPair'?`${item.display}|${item.body}`:
 const isRecent=(item,history,field,limit)=>history.slice(0,limit).some(entry=>entry[field]===itemValue(item,field));
 const isSimilar=(item,history,field,limit)=>history.slice(0,limit).some(entry=>textSimilarity(entry[field]||'',itemValue(item,field)||'')>=.67);
 
-function weightedChoice(list,tags,{history=[],field='',recentLimit=0,similarLimit=0,metaField='',metaLimit=0,requiredTag=''}={}){
+function weightedChoice(list,tags,{history=[],field='',recentLimit=0,similarLimit=0,metaField='',metaLimit=0,requiredTag='',contextScope=''}={}){
  let pool=list.filter(item=>!isRecent(item,history,field,recentLimit)&&!isSimilar(item,history,field,similarLimit));
  if(metaField&&metaLimit){const recentMeta=new Set(history.slice(0,metaLimit).map(entry=>entry[metaField]).filter(Boolean));const varied=pool.filter(item=>!recentMeta.has(item[metaField]));if(varied.length)pool=varied}
+ if(contextScope){const compatible=pool.filter(item=>!item.scopes||item.scopes.includes(contextScope));pool=compatible.length?compatible:list.filter(item=>!item.scopes||item.scopes.includes(contextScope))}
  if(requiredTag){const contextual=pool.filter(item=>item.tags.includes(requiredTag));if(contextual.length)pool=contextual;else pool=list.filter(item=>item.tags.includes(requiredTag))}
  if(!pool.length)pool=list;
  const linked=pool.filter(item=>intersects(item.tags,tags)>0);
@@ -40,7 +41,7 @@ export function createBrandingResult(history=[]){
  if(themePool.length<10)themePool=randomizerData.themes.filter(theme=>!recentThemes.has(theme.name));
  const theme=random(themePool.length?themePool:randomizerData.themes);
  const tags=theme.tags;
- const name=weightedChoice(randomizerData.names,tags,{history,field:'name',recentLimit:20,similarLimit:16,metaField:'namePattern',metaLimit:2,requiredTag:theme.group});
+ const name=weightedChoice(randomizerData.names,tags,{history,field:'name',recentLimit:20,similarLimit:16,metaField:'namePattern',metaLimit:2,requiredTag:theme.group,contextScope:theme.scope});
  const mood=weightedChoice(randomizerData.moods,tags,{history,field:'mood',recentLimit:18,similarLimit:12,metaField:'moodFormat',metaLimit:2});
  const fonts=weightedChoice(randomizerData.fontPairs,tags,{history,field:'fontPair',recentLimit:4});
  const palette=weightedChoice(randomizerData.palettes,tags);

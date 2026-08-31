@@ -23,6 +23,7 @@ for(let index=0;index<summaries.length;index+=1){
  const result=results[index];
  const sharesTags=item=>item.tags.some(tag=>result.theme.tags.includes(tag));
  if(!result.name.tags.includes(result.theme.group))failures.push(`name outside theme group at ${index}`);
+ if(result.name.scopes&&!result.name.scopes.includes(result.theme.scope))failures.push(`name outside theme scope at ${index}`);
  if(!sharesTags(result.name)||!sharesTags(result.mood)||!sharesTags(result.fonts))failures.push(`unlinked result at ${index}`);
 }
 
