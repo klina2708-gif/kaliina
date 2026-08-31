@@ -1,4 +1,4 @@
-const ERROR_ENDPOINT='https://kaliina.pages.dev/api/client-error';
+const ERROR_ENDPOINT='https://errors.kaliiii-na.ru/api/client-error';
 const MAX_REPORTS_PER_PAGE=5;
 let reportsSent=0;
 const fingerprints=new Set();
