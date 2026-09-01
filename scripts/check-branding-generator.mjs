@@ -1,5 +1,6 @@
 import {createBrandingResult,isValidBrandPalette,rememberBrandingResult,summarizeBrandingResult,textSimilarity} from '../src/brandingGenerator.js';
 import {randomizerData} from '../src/data/randomizerData.js';
+import {prepareDisplayText} from '../src/displayText.js';
 
 const memory={value:'[]',getItem(){return this.value},setItem(_key,value){this.value=value}};
 let history=[];
@@ -37,7 +38,26 @@ if(randomizerData.palettes.some(palette=>!isValidBrandPalette(palette)))failures
 if(new Set(randomizerData.palettes.map(palette=>palette.paletteTone)).size<15)failures.push('insufficient palette tone diversity');
 if(!randomizerData.names.some(item=>/[А-Яа-яЁё]/.test(item.name))||!randomizerData.names.some(item=>/[A-Za-z]/.test(item.name)))failures.push('missing Cyrillic or Latin names');
 
+const displayTextCases=new Map([
+ ['технологичный','технологичный'],
+ ['локальный с большим характером','локальный с\u00A0большим характером'],
+ ['быстрее, чем кажется','быстрее, чем кажется'],
+ ['не школа, а лаборатория','не\u00A0школа, а\u00A0лаборатория'],
+ ['немного странно и хорошо','немного странно и\u00A0хорошо'],
+ ['марка безалкогольных напитков','марка безалкогольных напитков'],
+ ['независимый книжный клуб','независимый книжный клуб'],
+ ['культурное пространство','культурное пространство'],
+ ['магазин продуктов у дома','магазин продуктов у\u00A0дома'],
+ ['выставка о городе и человеке','выставка о\u00A0городе и\u00A0человеке'],
+]);
+for(const [source,expected] of displayTextCases){
+ const formatted=prepareDisplayText(source);
+ if(formatted!==expected)failures.push(`display text mismatch: ${source}`);
+ if(prepareDisplayText(formatted)!==formatted)failures.push(`display text is not idempotent: ${source}`);
+ if(formatted.replaceAll('\u00A0',' ')!==source)failures.push(`display text changed content: ${source}`);
+}
+if(prepareDisplayText('local with bold character')!=='local with bold character')failures.push('english display text changed');
+
 const unique=field=>new Set(summaries.map(item=>item[field])).size;
 console.log(JSON.stringify({generated:results.length,uniqueThemes:unique('theme'),uniqueNames:unique('name'),uniqueMoods:unique('mood'),uniqueFontPairs:unique('fontPair'),paletteTones:new Set(summaries.map(item=>item.paletteTone)).size,namePatterns:new Set(summaries.map(item=>item.namePattern)).size,moodFormats:new Set(summaries.map(item=>item.moodFormat)).size,failures},null,2));
 if(failures.length)process.exitCode=1;
-

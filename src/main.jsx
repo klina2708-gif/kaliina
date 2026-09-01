@@ -4,6 +4,7 @@ import {randomizerData} from './data/randomizerData.js';
 import {brandingResultKey,createBrandingResult,loadBrandingHistory,rememberBrandingResult} from './brandingGenerator.js';
 import {generateModelingResult,modelingRandomizerData} from './data/modelingRandomizerData.js';
 import {reportClientError,startClientMonitoring} from './monitoring.js';
+import {prepareDisplayText} from './displayText.js';
 import './fonts.css';
 import './styles.css';
 
@@ -42,7 +43,7 @@ function DisplayValue({type,value}){
  if(!value)return null;
  if(type==='fonts')return <div className="font-pair"><strong data-text={value.display} style={{fontFamily:`'${value.display}', sans-serif`,fontWeight:value.displayWeight,fontStyle:value.displayStyle||'normal'}}>{value.display}</strong><span data-text={value.body} style={{fontFamily:`'${value.body}', sans-serif`,fontWeight:value.bodyWeight,fontStyle:value.bodyStyle||'normal'}}>{value.body}</span></div>;
  if(type==='palette')return <div className="palette" aria-label={`Палитра: ${value.colors.join(', ')}`}>{value.colors.map(color=><i key={color} style={{backgroundColor:color}} title={color}/>)}</div>;
- return <>{value.name}</>;
+ return <>{prepareDisplayText(value.name)}</>;
 }
 function useCellTextFit(ref,contentKey,enabled,minSize){
  useLayoutEffect(()=>{
@@ -57,7 +58,7 @@ function useCellTextFit(ref,contentKey,enabled,minSize){
   return()=>{cancelled=true;cancelAnimationFrame(frame);observer?.disconnect()};
  },[ref,contentKey,enabled,minSize]);
 }
-function RandomizerCell({index,type,label,value,generating}){const compact=['theme','name','mood'].includes(type)&&value?.name?.length>15;const showGhosts=generating&&type!=='fonts';const valueRef=useRef(null);const contentKey=type==='fonts'?`${value?.display||''}|${value?.body||''}`:value?.name||'';useCellTextFit(valueRef,contentKey,Boolean(value)&&!generating&&type!=='palette',type==='fonts'?17:18);return <div className={`cell ${generating?'cell--rolling':''} ${generating&&type==='fonts'?'cell--font-rolling':''}`}><span className="cell__number">[{index+1}]</span><b className="cell__label">{label}</b><div className="cell__window"><div ref={valueRef} className={`cell__value ${compact?'cell__value--compact':''}`}><DisplayValue type={type} value={value}/></div>{showGhosts&&<><div className="ghost ghost--one" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div><div className="ghost ghost--two" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div></>}</div></div>}
+function RandomizerCell({index,type,label,value,generating}){const showGhosts=generating&&type!=='fonts';const valueRef=useRef(null);const contentKey=type==='fonts'?`${value?.display||''}|${value?.body||''}`:value?.name||'';useCellTextFit(valueRef,contentKey,Boolean(value)&&!generating&&type!=='palette',type==='fonts'?17:18);return <div className={`cell ${generating?'cell--rolling':''} ${generating&&type==='fonts'?'cell--font-rolling':''}`}><span className="cell__number">[{index+1}]</span><b className="cell__label">{label}</b><div className="cell__window"><div ref={valueRef} className="cell__value"><DisplayValue type={type} value={value}/></div>{showGhosts&&<><div className="ghost ghost--one" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div><div className="ghost ghost--two" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div></>}</div></div>}
 
 const modelingCategories=[['object','предмет\\существо'],['theme','тематика'],['material','фактура'],['palette','цветовое сочетание']];
 const modelingObjects=modelingRandomizerData.objectPools.flatMap(pool=>pool.items);
@@ -99,4 +100,3 @@ createRoot(document.getElementById('root'),{
  onCaughtError:error=>reportClientError(error,{kind:'react.caught'}),
  onRecoverableError:error=>reportClientError(error,{kind:'react.recoverable'}),
 }).render(<App/>);
-
