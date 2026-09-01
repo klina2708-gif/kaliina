@@ -7,6 +7,9 @@ const random=list=>list[Math.floor(Math.random()*list.length)];
 const intersects=(a=[],b=[])=>a.filter(value=>b.includes(value)).length;
 const normalize=value=>value.toLocaleLowerCase('ru-RU').replace(/[^a-zа-яё0-9]+/gi,' ').trim();
 const words=value=>new Set(normalize(value).split(/\s+/).filter(Boolean));
+const HEX_COLOR=/^#[0-9A-F]{6}$/i;
+const toRgb=color=>[1,3,5].map(index=>Number.parseInt(color.slice(index,index+2),16));
+const colorDistance=(left,right)=>Math.hypot(...toRgb(left).map((channel,index)=>channel-toRgb(right)[index]));
 
 export function textSimilarity(left,right){
  const a=words(left),b=words(right);
@@ -15,7 +18,19 @@ export function textSimilarity(left,right){
  return shared/Math.max(a.size,b.size);
 }
 
-const itemValue=(item,field)=>field==='fontPair'?`${item.display}|${item.body}`:item.name;
+export function isValidBrandPalette(palette){
+ const colors=palette?.colors;
+ if(!Array.isArray(colors)||colors.length!==4||colors.some(color=>typeof color!=='string'||!HEX_COLOR.test(color)))return false;
+ const normalized=colors.map(color=>color.toUpperCase());
+ if(new Set(normalized).size!==4)return false;
+ return normalized.every((color,index)=>normalized.slice(index+1).every(other=>colorDistance(color,other)>=24));
+}
+
+const validPalettes=randomizerData.palettes.filter(isValidBrandPalette);
+const palettePool=validPalettes.length?validPalettes:[{colors:['#2B6558','#FFF8EA','#1B1B1B','#E5A93D'],roles:['primary','background','secondary','accent'],paletteTone:'safe-fallback',tags:['clean','trust']}];
+if(import.meta.env?.DEV&&validPalettes.length!==randomizerData.palettes.length)console.warn(`[brandingGenerator] Отбраковано палитр: ${randomizerData.palettes.length-validPalettes.length}`);
+
+const itemValue=(item,field)=>field==='fontPair'?`${item.display}|${item.body}`:field==='palette'?item.colors.join('|'):item.name;
 const isRecent=(item,history,field,limit)=>history.slice(0,limit).some(entry=>entry[field]===itemValue(item,field));
 const isSimilar=(item,history,field,limit)=>history.slice(0,limit).some(entry=>textSimilarity(entry[field]||'',itemValue(item,field)||'')>=.67);
 
@@ -44,12 +59,12 @@ export function createBrandingResult(history=[]){
  const name=weightedChoice(randomizerData.names,tags,{history,field:'name',recentLimit:20,similarLimit:16,metaField:'namePattern',metaLimit:2,requiredTag:theme.group,contextScope:theme.scope});
  const mood=weightedChoice(randomizerData.moods,tags,{history,field:'mood',recentLimit:18,similarLimit:12,metaField:'moodFormat',metaLimit:2});
  const fonts=weightedChoice(randomizerData.fontPairs,tags,{history,field:'fontPair',recentLimit:4});
- const palette=weightedChoice(randomizerData.palettes,tags);
+ const palette=weightedChoice(palettePool,[...new Set([...tags,...mood.tags])],{history,field:'palette',recentLimit:12,metaField:'paletteTone',metaLimit:3});
  return {theme,name,mood,fonts,palette};
 }
 
 export function summarizeBrandingResult(result){
- return {theme:result.theme.name,group:result.theme.group,name:result.name.name,namePattern:result.name.pattern,mood:result.mood.name,moodFormat:result.mood.format,fontPair:`${result.fonts.display}|${result.fonts.body}`,palette:result.palette.colors.join('|')};
+ return {theme:result.theme.name,group:result.theme.group,name:result.name.name,namePattern:result.name.pattern,mood:result.mood.name,moodFormat:result.mood.format,fontPair:`${result.fonts.display}|${result.fonts.body}`,palette:result.palette.colors.join('|'),paletteTone:result.palette.paletteTone};
 }
 
 export function loadBrandingHistory(storage=globalThis.localStorage){

@@ -67,8 +67,27 @@ export const fontPairs=[
 const paletteValues=[['#287DB8','#2A315E','#FFFDF7','#000000'],['#2B6558','#FFFAF0','#000000','#D8B54B'],['#E94B35','#F6C945','#183153','#F7F1E3'],['#151515','#C6FF00','#E5E2D8','#70706B'],['#E7B8C9','#F8EBDD','#3E53A4','#D94B38'],['#332C2C','#A65D45','#D8B6A4','#F6EEE5'],['#09111F','#2E51FF','#9DF2D0','#FF53C0'],['#20332B','#A7B4A5','#E8E5D9','#7B503B'],['#F05A28','#252525','#F0E52B','#D3D0C8'],['#F2EFE7','#1C1C1C','#C63C32','#98A29B'],['#5E3023','#C08552','#F3E9DC','#8AB17D'],['#152614','#6A994E','#A7C957','#F2E8CF'],['#1D3557','#457B9D','#A8DADC','#F1FAEE'],['#3D315B','#444B6E','#9AB87A','#F8F991'],['#2C1320','#5F4B66','#A7ADC6','#8797AF'],['#7A0019','#F7B2BD','#F5D3C8','#1D1E2C'],['#0B3954','#087E8B','#BFD7EA','#FF5A5F'],['#2D1E2F','#6B2D5C','#F0386B','#F8F0FB'],['#264653','#2A9D8F','#E9C46A','#E76F51'],['#283618','#606C38','#DDA15E','#FEFAE0'],['#03071E','#6A040F','#D00000','#FFBA08'],['#22223B','#4A4E69','#9A8C98','#F2E9E4'],['#004B23','#38B000','#CCFF33','#FFFFE8'],['#001219','#005F73','#94D2BD','#EE9B00']];
 const paletteTags=[['digital','clean'],['local','warm'],['food','friendly'],['industrial','bold'],['beauty','soft'],['craft','warm'],['future','digital'],['organic','health'],['retail','bold'],['editorial','professional'],['food','organic'],['health','organic']];
 const hslToHex=(h,s,l)=>{h=((h%360)+360)%360;s/=100;l/=100;const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return '#'+[r,g,b].map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('').toUpperCase()};
-const generatedPalettes=Array.from({length:240},(_,i)=>{const hue=(i*137.508)%360;return {colors:[hslToHex(hue,42+(i%4)*9,18+(i%3)*6),hslToHex(hue+35+(i%7)*4,58,40+(i%5)*5),hslToHex(hue+165,32+(i%6)*5,79+(i%3)*4),hslToHex(hue+238+(i%9)*2,64,50)],tags:paletteTags[i%paletteTags.length]}});
+const paletteRoles=['primary','secondary','background','accent'];
+const paletteProfiles=[
+ {name:'light',steps:[[0,48,84],[32,46,68],[12,10,96],[192,66,43]],tags:['soft','clean']},
+ {name:'dark',steps:[[0,44,15],[28,48,28],[8,8,10],[182,68,62]],tags:['dramatic','premium']},
+ {name:'pastel',steps:[[0,46,78],[38,42,72],[188,32,91],[214,52,58]],tags:['beauty','friendly']},
+ {name:'saturated',steps:[[0,82,43],[52,84,50],[204,28,91],[188,88,42]],tags:['bold','energy']},
+ {name:'muted',steps:[[0,24,36],[46,22,54],[20,15,87],[198,30,42]],tags:['editorial','craft']},
+ {name:'contrast',steps:[[0,72,24],[178,70,48],[35,18,94],[210,86,44]],tags:['commercial','bold']},
+ {name:'monochrome',steps:[[0,48,22],[0,40,48],[0,18,88],[0,64,62]],tags:['precise','professional']},
+ {name:'analogous',steps:[[-28,58,34],[0,56,51],[24,28,89],[50,72,48]],tags:['art','organic']},
+ {name:'complementary',steps:[[0,62,31],[180,56,48],[18,16,92],[198,78,45]],tags:['experimental','culture']},
+ {name:'neutral-accent',steps:[[0,10,24],[34,9,56],[18,8,93],[142,78,43]],tags:['clean','retail']},
+ {name:'light-deep',steps:[[0,38,86],[46,44,72],[18,12,96],[205,66,22]],tags:['soft','trust']},
+ {name:'dark-light',steps:[[0,50,16],[42,46,29],[215,18,84],[172,76,68]],tags:['future','digital']},
+ {name:'warm',steps:[[0,62,34],[32,68,54],[46,38,91],[348,78,48]],tags:['warm','food']},
+ {name:'cool',steps:[[0,58,28],[34,52,48],[188,35,91],[224,76,56]],tags:['digital','health']},
+ {name:'mixed-temperature',steps:[[0,58,31],[162,52,46],[44,26,91],[214,78,51]],tags:['experimental','local']}
+];
+const rotate=(items,offset)=>items.map((_,index)=>items[(index+offset)%items.length]);
+const generatedPalettes=Array.from({length:300},(_,i)=>{const profile=paletteProfiles[i%paletteProfiles.length],hue=(i*137.508)%360,shift=(i*3)%4;const colors=profile.steps.map(([offset,saturation,lightness])=>hslToHex(hue+offset,saturation,lightness));return {colors:rotate(colors,shift),roles:rotate(paletteRoles,shift),paletteTone:profile.name,tags:[...new Set([...paletteTags[i%paletteTags.length],...profile.tags])]}});
 
-export const palettes=[...paletteValues.map((colors,i)=>({colors,tags:paletteTags[i%paletteTags.length]})),...generatedPalettes];
+export const palettes=[...paletteValues.map((colors,i)=>({colors,roles:rotate(paletteRoles,i%4),paletteTone:paletteProfiles[i%paletteProfiles.length].name,tags:paletteTags[i%paletteTags.length]})),...generatedPalettes];
 export const randomizerData={themes,names,moods,fontPairs,palettes};
 

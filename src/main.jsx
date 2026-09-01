@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {randomizerData} from './data/randomizerData.js';
 import {brandingResultKey,createBrandingResult,loadBrandingHistory,rememberBrandingResult} from './brandingGenerator.js';
@@ -16,7 +16,8 @@ const fontLoadSpecs=[...new Set(randomizerData.fontPairs.flatMap(pair=>[
  `${pair.displayStyle||'normal'} ${pair.displayWeight||400} 1em "${pair.display}"`,
  `${pair.bodyStyle||'normal'} ${pair.bodyWeight||400} 1em "${pair.body}"`,
 ]))];
-const preloadGeneratorFonts=()=>document.fonts?.load?Promise.allSettled(fontLoadSpecs.map(spec=>document.fonts.load(spec,'Аа Brand'))):Promise.resolve();
+const FONT_TEST_TEXT='Форма Фестиваль Шрифт Архив Maison 12 Том II IBM Plex Mono';
+const preloadGeneratorFonts=async()=>{if(!document.fonts?.load)return;const results=await Promise.allSettled(fontLoadSpecs.map(spec=>document.fonts.load(spec,FONT_TEST_TEXT)));await document.fonts.ready;if(import.meta.env.DEV){const failed=results.filter(result=>result.status==='rejected').length;if(failed)console.warn(`[RandomizerCell] Не удалось предварительно загрузить начертаний: ${failed}`)}};
 const UNIQUE_RESULT_LIMIT=100000;
 const modelingResultKey=result=>[result.object.name,result.theme.name,result.material.name,result.palette.colors.join(',')].join('|');
 function createUniqueResult(factory,keyOf,onAccept=()=>{}){
@@ -43,7 +44,20 @@ function DisplayValue({type,value}){
  if(type==='palette')return <div className="palette" aria-label={`Палитра: ${value.colors.join(', ')}`}>{value.colors.map(color=><i key={color} style={{backgroundColor:color}} title={color}/>)}</div>;
  return <>{value.name}</>;
 }
-function RandomizerCell({index,type,label,value,generating}){const compact=['theme','name','mood'].includes(type)&&value?.name?.length>15;const showGhosts=generating&&type!=='fonts';return <div className={`cell ${generating?'cell--rolling':''} ${generating&&type==='fonts'?'cell--font-rolling':''}`}><span className="cell__number">[{index+1}]</span><b className="cell__label">{label}</b><div className="cell__window"><div className={`cell__value ${compact?'cell__value--compact':''}`}><DisplayValue type={type} value={value}/></div>{showGhosts&&<><div className="ghost ghost--one"><DisplayValue type={type} value={random(sources[type])}/></div><div className="ghost ghost--two"><DisplayValue type={type} value={random(sources[type])}/></div></>}</div></div>}
+function useCellTextFit(ref,contentKey,enabled,minSize){
+ useLayoutEffect(()=>{
+  const element=ref.current,container=element?.parentElement;
+  if(!element||!container)return;
+  let cancelled=false,frame=0;
+  const fit=()=>{element.style.removeProperty('font-size');if(!enabled||cancelled)return;let size=Number.parseFloat(getComputedStyle(element).fontSize);while(size>minSize&&(element.scrollWidth>container.clientWidth+1||element.scrollHeight>container.clientHeight+1)){size-=1;element.style.fontSize=`${size}px`}};
+  const schedule=()=>{cancelAnimationFrame(frame);Promise.resolve(document.fonts?.ready).then(()=>{if(!cancelled)frame=requestAnimationFrame(fit)})};
+  schedule();
+  const observer=enabled&&typeof ResizeObserver!=='undefined'?new ResizeObserver(schedule):null;
+  if(observer)observer.observe(container);
+  return()=>{cancelled=true;cancelAnimationFrame(frame);observer?.disconnect()};
+ },[ref,contentKey,enabled,minSize]);
+}
+function RandomizerCell({index,type,label,value,generating}){const compact=['theme','name','mood'].includes(type)&&value?.name?.length>15;const showGhosts=generating&&type!=='fonts';const valueRef=useRef(null);const contentKey=type==='fonts'?`${value?.display||''}|${value?.body||''}`:value?.name||'';useCellTextFit(valueRef,contentKey,Boolean(value)&&!generating&&type!=='palette',type==='fonts'?17:18);return <div className={`cell ${generating?'cell--rolling':''} ${generating&&type==='fonts'?'cell--font-rolling':''}`}><span className="cell__number">[{index+1}]</span><b className="cell__label">{label}</b><div className="cell__window"><div ref={valueRef} className={`cell__value ${compact?'cell__value--compact':''}`}><DisplayValue type={type} value={value}/></div>{showGhosts&&<><div className="ghost ghost--one" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div><div className="ghost ghost--two" aria-hidden="true"><DisplayValue type={type} value={random(sources[type])}/></div></>}</div></div>}
 
 const modelingCategories=[['object','предмет\\существо'],['theme','тематика'],['material','фактура'],['palette','цветовое сочетание']];
 const modelingObjects=modelingRandomizerData.objectPools.flatMap(pool=>pool.items);
