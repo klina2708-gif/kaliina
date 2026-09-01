@@ -15,9 +15,8 @@ export function prepareDisplayText(value){
  const parts=value.split(/([ \t]+)/);
  for(let index=0;index<parts.length-2;index+=1){
   if(!shortRussianWord(parts[index])||!HORIZONTAL_SPACE.test(parts[index+1]))continue;
-  if(!parts[index+2]||shortRussianWord(parts[index+2]))continue;
+  if(!parts[index+2])continue;
   parts[index+1]=NON_BREAKING_SPACE;
  }
  return parts.join('');
 }
-
