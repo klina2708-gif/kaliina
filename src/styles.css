@@ -20,6 +20,10 @@
 .cell__window{height:9.5vw;min-height:0;contain:layout paint;isolation:isolate}
 .cell__value{position:absolute;inset:0}
 .font-pair strong,.font-pair span{display:block;height:1.05em}
+.font-pair strong,.font-pair span{position:relative}
+.cell--font-rolling .font-pair strong::before,.cell--font-rolling .font-pair strong::after,.cell--font-rolling .font-pair span::before,.cell--font-rolling .font-pair span::after{content:attr(data-text);position:absolute;inset:0;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;opacity:0;pointer-events:none;animation:font-ghost-up .24s linear infinite}
+.cell--font-rolling .font-pair strong::after,.cell--font-rolling .font-pair span::after{animation-delay:.12s}
+@keyframes font-ghost-up{from{transform:translateY(130%);opacity:0}38%{opacity:.22}to{transform:translateY(-120%);opacity:0}}
 @media(min-width:681px) and (max-width:1180px){.cell__window{height:122px;min-height:0}}
 @media(max-width:680px){.cell__window{height:90px;min-height:0}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.intro-reveal,.crt,.crt i,.cell__value,.ghost{animation:none!important}.generate,.intro h1,.by,.benefits p,.footer nav a{transition:none}}
